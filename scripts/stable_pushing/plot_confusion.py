@@ -108,6 +108,7 @@ if __name__ == '__main__':
         # ax_icr      = fig_icr.add_subplot(num_row,num_row,i+1)
         ax_img = fig_img.add_subplot(num_row,num_row,i+1)
         ax_img.imshow( image[0].cpu().permute(1,2,0).numpy())
+        print('image num: ', image.shape)
         
         for color, each_class in enumerate(classes):
             indices = each_class
@@ -117,7 +118,8 @@ if __name__ == '__main__':
             velocity_y = np.take(velocity[:,1],indices)
             velocity_z = np.take(velocity[:,2],indices)
             # ax_velocity.scatter(velocity_x, velocity_y, velocity_z, c=color, s = 1.5) 
-            ax_velocity.scatter(velocity_x, velocity_y, velocity_z, c=color, s = 200) 
+            # ax_velocity.scatter(velocity_x, velocity_y, velocity_z, c=color, s = 200) 
+            ax_velocity.scatter(velocity_x, velocity_y, velocity_z, c=color, s = 100) 
             
             # Plot 2d icr
             # icr_x = np.take(icr[:,0],indices)

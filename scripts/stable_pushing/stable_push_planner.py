@@ -506,13 +506,13 @@ class HybridAstarPushPlanner(object):
         
         if animate:
             # TODO: remove save option
-            for i in range(0, 10):
-                print('TODO: remove save option!!!')
+            # for i in range(0, 10):
+                # print('TODO: remove save option!!!')
             # save options
-            fig_save_dir = '/home/cloudrobot2/Desktop/Figs'
-            time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            before_plan_save_path = os.path.join(fig_save_dir, '{}_before.png'.format(time_str))
-            after_plan_save_path = os.path.join(fig_save_dir, '{}_after.png'.format(time_str))
+            # fig_save_dir = '/home/cloudrobot2/Desktop/Figs'
+            # time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            # before_plan_save_path = os.path.join(fig_save_dir, '{}_before.png'.format(time_str))
+            # after_plan_save_path = os.path.join(fig_save_dir, '{}_after.png'.format(time_str))
             
             ##########################################################
             # Draw planning scene before planning to check collision #
@@ -681,7 +681,7 @@ class HybridAstarPushPlanner(object):
             goal=goal,
             collision_system=collision_system,
             search_space=search_space,
-            animate=False)
+            animate=True)
         return path
 
     def update_map(self, map_corners, map_obstacles, **kwargs):

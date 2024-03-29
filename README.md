@@ -31,6 +31,11 @@ pip install -r requirements.txt
 pip3 install torch torchvision torchaudio
 ```
 
+### 4. Install ROS requirement msg
+```bash
+sudo apt-get install ros-noetic-vision-msgs 
+```
+
 # 2. Network Trainer
 
 ### 1. Link train dataset to the network trainer
@@ -41,7 +46,14 @@ Set path to 'data' folder in the first line in [config.yaml](/config.yaml).
 data_path: /path/to/train/dataset/folder/data
 ```
 
-### 2. Train The model
+### 2. Data Classification
+
+```bash
+cd ~/catkin_ws/src/stable-pushnet-network/scripts
+python3 dataload_idx.py
+```
+
+### 3. Train The model
 
 ```bash
 cd ~/catkin_ws/src/stable-pushnet-network/scripts
@@ -175,7 +187,7 @@ The module returns a push path with push success metric through ROS service.
 
 #### 2. Response
 
-- path [nav_msgs/Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html)
+- path ([nav_msgs/Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
   - Path of the end-effector (center of the fingertips) to push the target
 - plan_successful (`bool`)
   - True if the plan was successful
@@ -184,7 +196,7 @@ The module returns a push path with push success metric through ROS service.
 ### Custom Messages
 #### 1. PushTargetArray ([PushTargetArray]([PushTargetArray](./msg/PushTargetArray.msg)))
 Array of push targets
-#### 2. PushTarget [PushTarget]([PushTarget](./msg/PushTarget.msg))
+#### 2. PushTarget ([PushTarget]([PushTarget](./msg/PushTarget.msg)))
 - priority (`int32`)
   - Priority of the target. Smaller, higher priority
 - push_target_id (`int32`)

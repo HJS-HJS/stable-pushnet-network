@@ -70,14 +70,14 @@ def train_loop(train_loader, model, loss_fn, optimizer):
     return {'loss': average_loss, 'accuracy': average_acc, 'precision': average_prec, 'recall': average_recall}
 
 
-def test_loop(test_loader, model, loss_fn):
-    size = len(test_loader.dataset)
-    num_batches = len(test_loader)
+def val_loop(val_loader, model, loss_fn):
+    size = len(val_loader.dataset)
+    num_batches = len(val_loader)
 
-    test_loss, test_acc = 0, 0
+    val_loss, val_acc = 0, 0
     true_positives, false_positives, false_negatives = 0, 0, 0
     model.train(False)
-    pbar = tqdm(test_loader)    
+    pbar = tqdm(val_loader)    
     with torch.no_grad():
         for images, velocities, labels in pbar:
             images = images.to(DEVICE)
@@ -89,7 +89,7 @@ def test_loop(test_loader, model, loss_fn):
             loss = loss_fn(pred, labels)
 
             # Accumulate loss 
-            test_loss += loss.item()
+            val_loss += loss.item()
 
             # Accumulate accuracy
             pred   = torch.argmax(pred, dim=1)
@@ -97,21 +97,21 @@ def test_loop(test_loader, model, loss_fn):
             true_positives  += torch.sum(torch.logical_and(pred == 1, labels == 1)).item()
             false_positives += torch.sum(torch.logical_and(pred == 1, labels == 0)).item()
             false_negatives += torch.sum(torch.logical_and(pred == 0, labels == 1)).item()
-            test_acc += torch.sum(pred == labels).item()
+            val_acc += torch.sum(pred == labels).item()
 
     # Print
-    test_loss /= num_batches
-    test_acc /= size
+    val_loss /= num_batches
+    val_acc /= size
     try:
-        test_precision = true_positives / (true_positives + false_positives)
+        val_precision = true_positives / (true_positives + false_positives)
     except ZeroDivisionError:
-        test_precision = 0
+        val_precision = 0
     try:
-        test_recall = true_positives / (true_positives + false_negatives)
+        val_recall = true_positives / (true_positives + false_negatives)
     except ZeroDivisionError:
-        test_recall = 0
-    print('Test Error: | Loss: {:.4f} | Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f}'.format(test_loss, test_acc, test_precision, test_recall))
-    return {'loss': test_loss, 'accuracy': test_acc, 'precision': test_precision, 'recall': test_recall}
+        val_recall = 0
+    print('Validation Error: | Loss: {:.4f} | Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f}'.format(val_loss, val_acc, val_precision, val_recall))
+    return {'loss': val_loss, 'accuracy': val_acc, 'precision': val_precision, 'recall': val_recall}
 
 def feature_extraction(dataloader,model, num_samples):
     print("Extracting features...")
@@ -189,12 +189,15 @@ if __name__ == "__main__":
 
     # data
     pushnet_train_dataset = PushNetDataset(dataset_dir, image_type=image_type)
-    pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
+    pushnet_val_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='val')
+    # pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
     
     train_sampler = load_sampler(pushnet_train_dataset)
-    test_sampler = load_sampler(pushnet_test_dataset)
+    val_sampler = load_sampler(pushnet_val_dataset)
+    # test_sampler = load_sampler(pushnet_test_dataset)
     train_dataloader = DataLoader(pushnet_train_dataset, batch_size, train_sampler, num_workers=num_workers)
-    test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
+    val_dataloader = DataLoader(pushnet_val_dataset, 1000, val_sampler, num_workers=num_workers)
+    # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
 
     # model
     model = PushNet()
@@ -216,7 +219,7 @@ if __name__ == "__main__":
     
     
     epoch_start = 0
-    
+    validation_loss = 100
     
     # train
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -224,22 +227,31 @@ if __name__ == "__main__":
         print('Epoch {}/{}'.format(epoch+1, epochs))
         epoch_start += 1
         train_metric = train_loop(train_dataloader, model, loss_fn, optimizer)
-        test_metric = test_loop(test_dataloader, model, loss_fn)
+        val_metric = val_loop(val_dataloader, model, loss_fn)
 
         # write to tensorboard          
-        loss_metric = {'train': train_metric['loss'], 'test': test_metric['loss']}
-        acc_metric = {'train': train_metric['accuracy'], 'test': test_metric['accuracy']}
-        precision_metric = {'train': train_metric['precision'], 'test': test_metric['precision']}
-        recall_metric = {'train': train_metric['recall'], 'test': test_metric['recall']}
+        loss_metric = {'train': train_metric['loss'], 'val': val_metric['loss']}
+        acc_metric = {'train': train_metric['accuracy'], 'val': val_metric['accuracy']}
+        precision_metric = {'train': train_metric['precision'], 'val': val_metric['precision']}
+        recall_metric = {'train': train_metric['recall'], 'val': val_metric['recall']}
 
         writer.add_scalars('loss', loss_metric, epoch)
         writer.add_scalars('accuracy', acc_metric, epoch)
-        writer.add_scalars('precision', precision_metric, epoch)
+        writer.add_scalars
+        ('precision', precision_metric, epoch)
         writer.add_scalars('recall', recall_metric, epoch)
         
         writer.flush()
 
-        # save model
-        if (epoch + 1) % 10 == 0:
-            torch.save(model.state_dict(), tmp_model_path + '/{}/logs'.format(cur_date))
+        if validation_loss - val_metric['loss'] < -0.01:
+            print('validation loss increase{}'.format(validation_loss - val_metric['loss']))
+            # pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
+            # test_sampler = load_sampler(pushnet_test_dataset)
+            # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
+            # test_metrcdic = test_loop(test_dataloader, model, loss_fn)
+            break
+        if validation_loss > val_metric['loss']:
+            torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model' + str(epoch) + '-' + str(val_metric['loss']) +'.pt')
+            validation_loss = val_metric['loss']
+
         print('-'*10)

@@ -174,7 +174,6 @@ class StablePushNetServer(object):
         
         # Sort target goals by priority
         sorted_indices = np.argsort(priority_array)
-        
         target_id_list = target_id_array[sorted_indices]
         goal_pose_list = goal_pose_array[sorted_indices]
         push_direction_range_list = push_direction_range_array[sorted_indices]
